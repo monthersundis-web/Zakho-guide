@@ -1,134 +1,96 @@
 import streamlit as st
-
 import google.generativeai as genai
-
 from PIL import Image
+from gtts import gTTS
+import io
+import os
 
-
-
-# --- ڕێکخستنا زیرەکیا دەستکرد ---
-
+# ======================
+# API KEY
+# ======================
 if "GEMINI_API_KEY" in st.secrets:
-
-    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-
+    api_key = st.secrets["GEMINI_API_KEY"]
 else:
-
-    st.error("کلیلێ API نەهاتیە دیتن د Secrets دا!")
-
+    st.error("⚠️ API KEY غير موجود في Secrets")
     st.stop()
 
+genai.configure(api_key=api_key)
 
-
-# --- ستایل و دیزاین ---
-
-st.set_page_config(page_title="ڕێبەرێ زاخۆ", page_icon="🏰")
+# ======================
+# Page settings
+# ======================
+st.set_page_config(
+    page_title="Zakho AI Guide",
+    page_icon="🏰",
+    layout="centered"
+)
 
 st.markdown("""
+<style>
+.main { text-align: right; direction: rtl; }
+.stButton>button { width: 100%; border-radius: 20px; }
+</style>
+""", unsafe_allow_html=True)
 
-    <style>
+st.title("🏰 ڕێبەرێ زیرەکێ زاخۆ")
+st.subheader("گەشتەکا مێژوویی دگەل زیرەکیا دەستکرد")
+st.write("وێنەیەکێ جهەکێ زاخۆ باربکە دا بۆ زانیاریێن مێژوویی.")
 
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic&display=swap');
-
-    html, body, [class*="css"] { font-family: 'Noto Sans Arabic', sans-serif; direction: rtl; text-align: right; }
-
-    .stButton>button { width: 100%; border-radius: 10px; background-color: #1e3a8a; color: white; height: 3em; font-weight: bold; }
-
-    .footer { text-align: center; margin-top: 50px; padding: 20px; border-top: 1px solid #ddd; font-size: 14px; }
-
-    </style>
-
-    """, unsafe_allow_html=True)
-
-
-
-st.write('<h1 style="text-align: center; color: #1e3a8a;">🏰 ڕێبەرێ زاخۆ یێ زیرەک</h1>', unsafe_allow_html=True)
-
-
-
-uploaded_file = st.file_uploader("📸 وێنەیەکێ باربکە", type=["jpg", "jpeg", "png"])
-
-
+# ======================
+# Upload image
+# ======================
+uploaded_file = st.file_uploader(
+    "وێنەیەکێ هەلبژێرە (JPG, PNG)",
+    type=["jpg", "jpeg", "png"]
+)
 
 if uploaded_file:
-
     image = Image.open(uploaded_file)
+    st.image(image, caption="وێنەیێ هاتە بارکرن", use_container_width=True)
 
-    st.image(image, use_container_width=True)
+    if st.button("🔍 شلوڤەکرنا وێنەی"):
+        with st.spinner("AI ل سەر وێنەی دکۆلیت..."):
+            try:
+                # Convert image to bytes (IMPORTANT FIX)
+                img_bytes_io = io.BytesIO()
+                image.save(img_bytes_io, format="JPEG")
+                img_bytes = img_bytes_io.getvalue()
 
-    
+                model = genai.GenerativeModel("gemini-1.5-flash")
 
-    if st.button("شلوڤەکرنا وێنەی 🔍"):
+                prompt = """
+                تۆ ڕێبەرەکێ گەشتیاری یێ شارەزایی ل باژێرێ زاخۆ.
+                ئەڤ وێنەیە ناس بکە و ئەڤان زانیاریان ب زمانێ کوردی (بەهدینی) بنڤێسە:
+                1. ناڤێ جهی
+                2. کورتەیەکا مێژوویی
+                3. گرنگیا گەشتیاری و کولتوری
+                بنڤێسە ب شێوەیەکێ جوان.
+                """
 
-        with st.spinner('AI یێ کار دکەت...'):
+                response = model.generate_content([
+                    prompt,
+                    {
+                        "mime_type": "image/jpeg",
+                        "data": img_bytes
+                    }
+                ])
 
-            # ئەڤە لیستا هەمی مۆدێلێن کو دبیت کار بکەن
+                result = response.text
 
-            # ئەم دێ ناڤێ مۆدێلی ب تەمامی نڤێسین (models/...) دا 404 نەت
+                st.success("✅ زانیاری هاتنە دیتن")
+                st.markdown(result)
 
-            test_models = [
+                # ======================
+                # Optional audio
+                # ======================
+                if st.checkbox("🔊 گوهدارن (تجريبي)"):
+                    tts = gTTS(result, lang="en")
+                    tts.save("temp.mp3")
+                    st.audio("temp.mp3")
+                    os.remove("temp.mp3")
 
-                'models/gemini-1.5-flash', 
+            except Exception as e:
+                st.error(f"❌ بوو مە ئاریشەیەک چێبوو: {e}")
 
-                'models/gemini-1.5-flash-latest', 
-
-                'gemini-1.5-flash',
-
-                'models/gemini-pro-vision'
-
-            ]
-
-            
-
-            success = False
-
-            for m_name in test_models:
-
-                try:
-
-                    model = genai.GenerativeModel(m_name)
-
-                    response = model.generate_content([
-
-                        "تۆ ڕێبەرەکێ گەشتیاری یێ زاخۆیی، ب زمانێ کوردی بەهدینی ڤی وێنەی ناس بکە و مێژوویا وی ب کورتى بێژە.", 
-
-                        image
-
-                    ])
-
-                    if response.text:
-
-                        st.success(f"✅ ئەنجام هاتە دیتن:")
-
-                        st.write(response.text)
-
-                        success = True
-
-                        break
-
-                except Exception:
-
-                    continue
-
-            
-
-            if not success:
-
-                st.error("ببوورە، کێشەیەک د پەیوەندیێ دا هەیا. پشکنینا کلیلێ API بکە.")
-
-
-
-# --- فۆتەر (دیزاین ب ناڤێ تە) ---
-
-st.markdown(f"""
-
-    <div class="footer">
-
-        <b>دیزاین و گەشەپێدان: ئەندازیار سندس صبري</b><br>
-
-        پڕۆژەیەک بۆ خزمەتا ئیدارا سەربەخۆیا زاخۆ
-
-    </div>
-
-    """, unsafe_allow_html=True)
-
+st.divider()
+st.info("ئەم پڕۆژە بۆ گەشتیارێن زاخۆ و پێشخستنا شارێ زاخۆیە 🌿")
