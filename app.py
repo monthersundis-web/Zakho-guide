@@ -11,7 +11,7 @@ import os
 if "GEMINI_API_KEY" in st.secrets:
     api_key = st.secrets["GEMINI_API_KEY"]
 else:
-    st.error("⚠️ API KEY غير موجود في Secrets")
+    st.error("⚠️ GEMINI_API_KEY غير موجود في Streamlit Secrets")
     st.stop()
 
 genai.configure(api_key=api_key)
@@ -34,7 +34,7 @@ st.markdown("""
 
 st.title("🏰 ڕێبەرێ زیرەکێ زاخۆ")
 st.subheader("گەشتەکا مێژوویی دگەل زیرەکیا دەستکرد")
-st.write("وێنەیەکێ جهەکێ زاخۆ باربکە دا بۆ زانیاریێن مێژوویی.")
+st.write("وێنەیەکێ جهەکێ مێژوویی ل زاخۆ باربکە دا بۆ زانیاریێن تەواو.")
 
 # ======================
 # Upload image
@@ -49,22 +49,27 @@ if uploaded_file:
     st.image(image, caption="وێنەیێ هاتە بارکرن", use_container_width=True)
 
     if st.button("🔍 شلوڤەکرنا وێنەی"):
-        with st.spinner("AI ل سەر وێنەی دکۆلیت..."):
+        with st.spinner("AI ل سەر وێنەی دکۆلیت و زانیاریان کۆم دکەت..."):
             try:
-                # Convert image to bytes (IMPORTANT FIX)
+                # ======================
+                # Convert image to bytes
+                # ======================
                 img_bytes_io = io.BytesIO()
                 image.save(img_bytes_io, format="JPEG")
                 img_bytes = img_bytes_io.getvalue()
 
-model = genai.GenerativeModel("gemini-pro-vision")
+                # ======================
+                # Gemini Vision model (STABLE)
+                # ======================
+                model = genai.GenerativeModel("gemini-pro-vision")
 
                 prompt = """
                 تۆ ڕێبەرەکێ گەشتیاری یێ شارەزایی ل باژێرێ زاخۆ.
-                ئەڤ وێنەیە ناس بکە و ئەڤان زانیاریان ب زمانێ کوردی (بەهدینی) بنڤێسە:
-                1. ناڤێ جهی
-                2. کورتەیەکا مێژوویی
-                3. گرنگیا گەشتیاری و کولتوری
-                بنڤێسە ب شێوەیەکێ جوان.
+                ئەڤ وێنەیە ناس بکە و ب زمانێ کوردی (بەهدینی) ئەڤان خاڵان ڕوون بکە:
+                - ناڤێ جهی
+                - کورتەیەکا مێژوویی (کەنگی هاتیە ئاڤاکرن)
+                - گرنگیا وی یا گەشتیاری و کولتوری
+                بنڤێسە ب شێوەیەکێ سادە و جوان.
                 """
 
                 response = model.generate_content([
@@ -81,7 +86,7 @@ model = genai.GenerativeModel("gemini-pro-vision")
                 st.markdown(result)
 
                 # ======================
-                # Optional audio
+                # Optional Audio
                 # ======================
                 if st.checkbox("🔊 گوهدارن (تجريبي)"):
                     tts = gTTS(result, lang="en")
@@ -90,7 +95,7 @@ model = genai.GenerativeModel("gemini-pro-vision")
                     os.remove("temp.mp3")
 
             except Exception as e:
-                st.error(f"❌ بوو مە ئاریشەیەک چێبوو: {e}")
+                st.error(f"❌ هەڵە چێبوو: {e}")
 
 st.divider()
 st.info("ئەم پڕۆژە بۆ گەشتیارێن زاخۆ و پێشخستنا شارێ زاخۆیە 🌿")
