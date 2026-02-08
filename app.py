@@ -6,25 +6,27 @@ from PIL import Image
 
 
 
-# وەرگرتنا کلیلێ API ژ Secrets
+# 1. پشکنینا کلیلێ د Secrets دا
 
 if "GEMINI_API_KEY" in st.secrets:
 
-    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    api_key = st.secrets["GEMINI_API_KEY"]
+
+    genai.configure(api_key=api_key)
 
 else:
 
-    st.error("کلیلێ API نەهاتیە دیتن د Secrets دا!")
+    st.error("❌ کلیلێ API د پشکێ Secrets دا نەهاتیە دیتن! کلیلێ دابنە.")
+
+    st.stop()
 
 
 
-st.set_page_config(page_title="Zakho AI Guide", page_icon="🏰")
-
-st.title("🏰 ڕێبەرێ زیرەکێ زاخۆ")
+st.title("🏰 پشکنەرا ئاریشەیا ڕێبەرێ زاخۆ")
 
 
 
-uploaded_file = st.file_uploader("وێنەیەک باربکە...", type=["jpg", "png", "jpeg"])
+uploaded_file = st.file_uploader("وێنەیەک باربکە بۆ پشکنینێ...", type=["jpg", "png", "jpeg"])
 
 
 
@@ -36,45 +38,47 @@ if uploaded_file is not None:
 
     
 
-    if st.button("شلوڤەکرنا وێنەی 🔍"):
+    if st.button("دەستپێکرنا پشکنینا تەکنیکی 🔍"):
 
-        with st.spinner('AI یێ بزاڤێ دکەت زانیاریان بدۆزیتەوە...'):
+        # پێنگاڤا ١: پشکنینا لیستا مۆدێلان
 
-            # ئەڤە لیستەکا ناڤێن مۆدێلانە، سیستەم دێ ئێک ب ئێک تاقی کەت هەتا ئێک کار دکەت
+        try:
 
-            model_names = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-pro-vision']
+            st.write("🔄 پێنگاڤا ١: پشکنینا مۆدێلان...")
 
-            success = False
+            models = [m.name for m in genai.list_models()]
 
-            
+            st.write("✅ مۆدێلێن بەردەست بۆ تە:", models)
 
-            for m_name in model_names:
+        except Exception as e:
 
-                try:
+            st.error(f"❌ ئاریشە د کلیلێ API دا هەیا: {e}")
 
-                    model = genai.GenerativeModel(m_name)
-
-                    response = model.generate_content(["تۆ ڕێبەرەکێ گەشتیاری یێ زاخۆیی، ب کوردی بەهدینی مێژوویا ڤی وێنەی ب کورتى بێژە", image])
-
-                    st.success(f"✅ ئەنجام ب مۆدێلێ ({m_name}):")
-
-                    st.write(response.text)
-
-                    success = True
-
-                    break # ئەگەر کار کر، ئێدی ناچیتە سەر یێ دی
-
-                except Exception as e:
-
-                    continue # ئەگەر 404 دا، دێ مۆدێلێ دی تاقی کەت
-
-            
-
-            if not success:
-
-                st.error("ببوورە، چ مۆدێلان کار نەکر. کلیلێ API یان وەشانا لایبرەریێ پشکنی بکە.")
+            st.stop()
 
 
 
-st.info("ئەڤ پڕۆژە هاتییە دروستكرن ژ لایێ ئەندازیار سندس صبري.")
+        # پێنگاڤا ٢: تاقیکرنا مۆدێلێ Flash ب وێنەیی
 
+        try:
+
+            st.write("🔄 پێنگاڤا ٢: تاقیکرنا ناردنا وێنەی...")
+
+            model = genai.GenerativeModel('gemini-1.5-flash')
+
+            response = model.generate_content(["ئەڤە چیە؟ ب کوردی بێژە", image])
+
+            st.success("🎉 پیرۆزە! کار کر:")
+
+            st.write(response.text)
+
+        except Exception as e:
+
+            st.error(f"❌ ئاریشەیا سەرەکی ئەڤەیە: {e}")
+
+            st.info("ئەگەر ل سەر نڤێسابوو (API key not valid)، واتە کلیلێ تە یێ خەلەتە.")
+
+            st.info("ئەگەر ل سەر نڤێسابوو (User location not supported)، واتە کێشەیا جوگرافی هەیا.")
+
+
+st.info("ئەڤ پرەژە هاتیە دروستكرن ژ لایێ ئەندازیار سندس صبري ")
