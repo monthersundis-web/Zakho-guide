@@ -43,7 +43,7 @@ if uploaded_file is not None:
         with st.spinner('AI یێ ل سەر دکۆلیت و زانیاریان کۆم دکەت...'):
             try:
                 # 4. موديل Gemini 1.5 Flash
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                model = genai.GenerativeModel('gemini-1.5-flash-latest')
                 
                 # برومبت (Prompt) محسن للحصول على أفضل نتيجة
                 prompt = """
