@@ -4,11 +4,9 @@ import google.generativeai as genai
 
 from PIL import Image
 
-import time
 
 
-
-# --- ١. ڕێکخستنا زیرەکیا دەستکرد ---
+# --- ڕێکخستنا زیرەکیا دەستکرد ---
 
 if "GEMINI_API_KEY" in st.secrets:
 
@@ -16,31 +14,27 @@ if "GEMINI_API_KEY" in st.secrets:
 
 else:
 
-    st.error("کلیلێ API نەهاتیە دیتن!")
+    st.error("کلیلێ API نەهاتیە دیتن د Secrets دا!")
 
     st.stop()
 
 
 
-# --- ٢. دیزاین و ستایل (CSS) ---
+# --- ستایل و دیزاین ---
 
-st.set_page_config(page_title="ڕێبەرێ زاخۆ یێ زیرەک", page_icon="🏰", layout="centered")
-
-
+st.set_page_config(page_title="ڕێبەرێ زاخۆ", page_icon="🏰")
 
 st.markdown("""
 
     <style>
 
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic&display=swap');
 
     html, body, [class*="css"] { font-family: 'Noto Sans Arabic', sans-serif; direction: rtl; text-align: right; }
 
-    .stButton>button { width: 100%; border-radius: 12px; height: 3em; background-image: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; font-weight: bold; border: none; }
+    .stButton>button { width: 100%; border-radius: 10px; background-color: #1e3a8a; color: white; height: 3em; font-weight: bold; }
 
-    .result-box { background-color: white; padding: 20px; border-radius: 15px; border-right: 5px solid #1e3a8a; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-top: 20px; text-align: right; }
-
-    .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; border-top: 1px solid #ddd; margin-top: 50px; }
+    .footer { text-align: center; margin-top: 50px; padding: 20px; border-top: 1px solid #ddd; font-size: 14px; }
 
     </style>
 
@@ -48,11 +42,11 @@ st.markdown("""
 
 
 
-st.write(f'<h1 style="text-align: center; color: #1e3a8a;">🏰 ڕێبەرێ زاخۆ یێ زیرەک (AI)</h1>', unsafe_allow_html=True)
+st.write('<h1 style="text-align: center; color: #1e3a8a;">🏰 ڕێبەرێ زاخۆ یێ زیرەک</h1>', unsafe_allow_html=True)
 
 
 
-uploaded_file = st.file_uploader("📸 وێنەیەکێ جهەکێ زاخۆ باربکە", type=["jpg", "jpeg", "png"])
+uploaded_file = st.file_uploader("📸 وێنەیەکێ باربکە", type=["jpg", "jpeg", "png"])
 
 
 
@@ -64,69 +58,75 @@ if uploaded_file:
 
     
 
-    if st.button("شلوڤەکرنا وێنەی ب ژیریا دەستکرد 🔍"):
+    if st.button("شلوڤەکرنا وێنەی 🔍"):
 
-        with st.spinner('⏳ ئەندازیار سندس: AI یێ وێنەی شلوڤە دکەت...'):
+        with st.spinner('AI یێ کار دکەت...'):
 
-            try:
+            # ئەڤە لیستا هەمی مۆدێلێن کو دبیت کار بکەن
 
-                # مۆدێلێ ٢.٠ بەکار دئینین چونکی د لیستا تە دا یا دیار بوو کو ئەڤە کار دکەت
+            # ئەم دێ ناڤێ مۆدێلی ب تەمامی نڤێسین (models/...) دا 404 نەت
 
-                # ئەم دێ ناڤێ مۆدێلی ب تەمامی وەک "models/gemini-2.0-flash-exp" نڤێسین
+            test_models = [
 
-                model = genai.GenerativeModel(model_name='gemini-2.0-flash-exp')
+                'models/gemini-1.5-flash', 
 
-                
+                'models/gemini-1.5-flash-latest', 
 
-                prompt = "تۆ ڕێبەرەکێ گەشتیاری یێ زاخۆیی، ڤی وێنەی ناس بکە و ب زمانێ کوردی بەهدینی مێژوویا وی ب کورتى بێژە."
+                'gemini-1.5-flash',
 
-                
+                'models/gemini-pro-vision'
 
-                response = model.generate_content([prompt, image])
+            ]
 
-                
+            
 
-                st.markdown(f"""
+            success = False
 
-                <div class="result-box">
-
-                    <h3 style="color: #1e3a8a;">📝 ئەنجامێ شلوڤەکرنێ:</h3>
-
-                    <p style="line-height: 1.6; font-size: 18px;">{response.text}</p>
-
-                </div>
-
-                """, unsafe_allow_html=True)
-
-                st.balloons()
-
-                
-
-            except Exception as e:
-
-                # ئەگەر دووبارە 404 دا، دێ ڤێ جارێ وەشانا سادە تاقی کەین
+            for m_name in test_models:
 
                 try:
 
-                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    model = genai.GenerativeModel(m_name)
 
-                    response = model.generate_content([prompt, image])
+                    response = model.generate_content([
 
-                    st.write(response.text)
+                        "تۆ ڕێبەرەکێ گەشتیاری یێ زاخۆیی، ب زمانێ کوردی بەهدینی ڤی وێنەی ناس بکە و مێژوویا وی ب کورتى بێژە.", 
 
-                except Exception as e2:
+                        image
 
-                    st.error(f"ئاریشەیا تەکنیکی: {e2}")
+                    ])
+
+                    if response.text:
+
+                        st.success(f"✅ ئەنجام هاتە دیتن:")
+
+                        st.write(response.text)
+
+                        success = True
+
+                        break
+
+                except Exception:
+
+                    continue
+
+            
+
+            if not success:
+
+                st.error("ببوورە، کێشەیەک د پەیوەندیێ دا هەیا. پشکنینا کلیلێ API بکە.")
 
 
+
+# --- فۆتەر (دیزاین ب ناڤێ تە) ---
 
 st.markdown(f"""
 
     <div class="footer">
 
-        <b>دیزاین و گەشەپێدان ژ لایێ: ئەندازیار سندس صبري</b><br>
+        <b>دیزاین و گەشەپێدان: ئەندازیار سندس صبري</b><br>
 
-        پڕۆژەکێ داهێنەرانە بۆ ئیدارا سەربەخۆیا زاخۆ
+        پڕۆژەیەک بۆ خزمەتا ئیدارا سەربەخۆیا زاخۆ
 
     </div>
 
