@@ -56,7 +56,7 @@ if uploaded_file:
                 image.save(img_bytes_io, format="JPEG")
                 img_bytes = img_bytes_io.getvalue()
 
-                model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-pro-vision")
 
                 prompt = """
                 تۆ ڕێبەرەکێ گەشتیاری یێ شارەزایی ل باژێرێ زاخۆ.
